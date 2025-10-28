@@ -14,6 +14,7 @@ const onlineCount = document.getElementById('onlineCount');
 
 let localStream;
 let peerConnection;
+let userLocation = { country: 'Unknown', countryCode: 'UN' };
 
 const configuration = {
   iceServers: [
@@ -42,6 +43,63 @@ const configuration = {
   ]
 };
 
+// Function to get user location from their IP
+async function getUserLocation() {
+  try {
+    // Try multiple geolocation services for better reliability
+    const services = [
+      'https://ipapi.co/json/',
+      'https://ipinfo.io/json',
+      'https://api.ipify.org?format=json'
+    ];
+    
+    for (const service of services) {
+      try {
+        const response = await fetch(service);
+        const data = await response.json();
+        
+        if (service.includes('ipapi.co')) {
+          return {
+            country: data.country_name || 'Unknown',
+            countryCode: data.country_code || 'UN'
+          };
+        } else if (service.includes('ipinfo.io')) {
+          return {
+            country: data.country || 'Unknown',
+            countryCode: data.country || 'UN'
+          };
+        } else if (service.includes('ipify.org')) {
+          // If we only got the IP, try to get location with another service
+          const locationResponse = await fetch(`http://ip-api.com/json/${data.ip}`);
+          const locationData = await locationResponse.json();
+          
+          if (locationData.status === 'success') {
+            return {
+              country: locationData.country || 'Unknown',
+              countryCode: locationData.countryCode || 'UN'
+            };
+          }
+        }
+      } catch (error) {
+        console.warn(`Failed to get location from ${service}:`, error);
+        continue;
+      }
+    }
+    
+    // If all services fail, return unknown
+    return { country: 'Unknown', countryCode: 'UN' };
+  } catch (error) {
+    console.error('Error getting user location:', error);
+    return { country: 'Unknown', countryCode: 'UN' };
+  }
+}
+
+// Initialize user location when the page loads
+window.addEventListener('load', async () => {
+  userLocation = await getUserLocation();
+  console.log('User location detected:', userLocation);
+});
+
 interestForm.addEventListener('submit', async e => {
   e.preventDefault();
 
@@ -65,7 +123,8 @@ interestForm.addEventListener('submit', async e => {
     return;
   }
 
-  socket.emit('setInterests', interests);
+  // Send both interests and location to the server
+  socket.emit('setInterests', { interests, location: userLocation });
 });
 
 newMatchBtn.addEventListener('click', () => {
@@ -76,6 +135,11 @@ newMatchBtn.addEventListener('click', () => {
   remoteVideo.srcObject = null;
   chatBox.innerHTML = '';
   partnerInfo.style.display = 'none';
+  
+  // Show a searching message
+  appendMessage('Searching for a new match...', 'system-message');
+  
+  // Request a new match
   socket.emit('newMatch');
 });
 
@@ -111,6 +175,9 @@ function createPeerConnection() {
 
 socket.on('partner', async data => {
   console.log('Partner found:', data.id);
+  
+  // Clear any previous messages
+  chatBox.innerHTML = '';
 
   partnerInfo.style.display = 'block';
   countryName.textContent = data.country;
@@ -161,11 +228,27 @@ socket.on('partner-left', () => {
   }
   remoteVideo.srcObject = null;
   partnerInfo.style.display = 'none';
-  alert('Your partner disconnected.');
+  appendMessage('Your partner disconnected. Click "New Match" to find someone else.', 'system-message');
 });
 
 socket.on('onlineCount', count => {
   onlineCount.textContent = `Online: ${count}`;
+});
+
+// Handle the clearChat event from the server
+socket.on('clearChat', () => {
+  chatBox.innerHTML = '';
+  partnerInfo.style.display = 'none';
+  if (peerConnection) {
+    peerConnection.close();
+    peerConnection = null;
+  }
+  remoteVideo.srcObject = null;
+});
+
+// Handle the searching event from the server
+socket.on('searching', () => {
+  appendMessage('Searching for a match with similar interests...', 'system-message');
 });
 
 sendBtn.addEventListener('click', sendMessage);
