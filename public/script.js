@@ -21,23 +21,23 @@ const configuration = {
     { urls: "stun:stun.relay.metered.ca:80" },
     {
       urls: "turn:global.relay.metered.ca:80",
-      username: "776ad264d8d7c2912b8608ca",
-      credential: "whgWO39tq3A27jzm",
+      username: "51ce19f71e425b82d584c3f9",
+      credential: "y3y8M7SKbRnt67UR",
     },
     {
       urls: "turn:global.relay.metered.ca:80?transport=tcp",
-      username: "776ad264d8d7c2912b8608ca",
-      credential: "whgWO39tq3A27jzm",
+      username: "51ce19f71e425b82d584c3f9",
+      credential: "y3y8M7SKbRnt67UR",
     },
     {
       urls: "turn:global.relay.metered.ca:443",
-      username: "776ad264d8d7c2912b8608ca",
-      credential: "whgWO39tq3A27jzm",
+      username: "51ce19f71e425b82d584c3f9",
+      credential: "y3y8M7SKbRnt67UR",
     },
     {
       urls: "turns:global.relay.metered.ca:443?transport=tcp",
-      username: "776ad264d8d7c2912b8608ca",
-      credential: "whgWO39tq3A27jzm",
+      username: "51ce19f71e425b82d584c3f9",
+      credential: "y3y8M7SKbRnt67UR",
     },
     { urls: "stun:stun.l.google.com:19302" }
   ]
