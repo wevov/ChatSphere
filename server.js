@@ -2,7 +2,11 @@ const express = require('express');
 const fetch = require('node-fetch');
 const app = express();
 const http = require('http').createServer(app);
-const io = require('socket.io')(http);
+
+// Updated Socket.IO configuration with increased buffer size for video files
+const io = require('socket.io')(http, {
+    maxHttpBufferSize: 1e8 // 100 MB - increased to handle larger video files
+});
 
 app.use(express.static('public'));
 
@@ -24,7 +28,155 @@ function getCountryCode(country) {
     'United Kingdom': 'GB',
     'Canada': 'CA',
     'Australia': 'AU',
-    // Add more country mappings as needed
+    'India': 'IN',
+    'Germany': 'DE',
+    'France': 'FR',
+    'Italy': 'IT',
+    'Spain': 'ES',
+    'Netherlands': 'NL',
+    'Brazil': 'BR',
+    'Japan': 'JP',
+    'China': 'CN',
+    'Russia': 'RU',
+    'Mexico': 'MX',
+    'South Korea': 'KR',
+    'Indonesia': 'ID',
+    'Turkey': 'TR',
+    'Saudi Arabia': 'SA',
+    'Switzerland': 'CH',
+    'Taiwan': 'TW',
+    'Belgium': 'BE',
+    'Ireland': 'IE',
+    'Israel': 'IL',
+    'Austria': 'AT',
+    'Norway': 'NO',
+    'United Arab Emirates': 'AE',
+    'Nigeria': 'NG',
+    'Egypt': 'EG',
+    'South Africa': 'ZA',
+    'Argentina': 'AR',
+    'Thailand': 'TH',
+    'Poland': 'PL',
+    'Malaysia': 'MY',
+    'Philippines': 'PH',
+    'Colombia': 'CO',
+    'Chile': 'CL',
+    'Finland': 'FI',
+    'Singapore': 'SG',
+    'Denmark': 'DK',
+    'Hong Kong': 'HK',
+    'Sweden': 'SE',
+    'Vietnam': 'VN',
+    'Portugal': 'PT',
+    'Romania': 'RO',
+    'Czech Republic': 'CZ',
+    'New Zealand': 'NZ',
+    'Peru': 'PE',
+    'Greece': 'GR',
+    'Pakistan': 'PK',
+    'Bangladesh': 'BD',
+    'Hungary': 'HU',
+    'Kuwait': 'KW',
+    'Ukraine': 'UA',
+    'Iraq': 'IQ',
+    'Algeria': 'DZ',
+    'Qatar': 'QA',
+    'Morocco': 'MA',
+    'Slovakia': 'SK',
+    'Ecuador': 'EC',
+    'Belarus': 'BY',
+    'Angola': 'AO',
+    'Sudan': 'SD',
+    'Azerbaijan': 'AZ',
+    'Ethiopia': 'ET',
+    'Kazakhstan': 'KZ',
+    'Tanzania': 'TZ',
+    'Ireland': 'IE',
+    'Guatemala': 'GT',
+    'Bulgaria': 'BG',
+    'Serbia': 'RS',
+    'Kenya': 'KE',
+    'Croatia': 'HR',
+    'Venezuela': 'VE',
+    'Uzbekistan': 'UZ',
+    'Libya': 'LY',
+    'Lebanon': 'LB',
+    'Ghana': 'GH',
+    'Oman': 'OM',
+    'Mozambique': 'MZ',
+    'Panama': 'PA',
+    'Czech Republic': 'CZ',
+    'Nepal': 'NP',
+    'Bolivia': 'BO',
+    'Côte d\'Ivoire': 'CI',
+    'Cameroon': 'CM',
+    'Uruguay': 'UY',
+    'Luxembourg': 'LU',
+    'Senegal': 'SN',
+    'Paraguay': 'PY',
+    'Jordan': 'JO',
+    'Azerbaijan': 'AZ',
+    'El Salvador': 'SV',
+    'Costa Rica': 'CR',
+    'Bahrain': 'BH',
+    'Tunisia': 'TN',
+    'Estonia': 'EE',
+    'Latvia': 'LV',
+    'Slovenia': 'SI',
+    'Lithuania': 'LT',
+    'Macedonia': 'MK',
+    'Moldova': 'MD',
+    'Armenia': 'AM',
+    'Albania': 'AL',
+    'Bosnia and Herzegovina': 'BA',
+    'Georgia': 'GE',
+    'Mongolia': 'MN',
+    'Yemen': 'YE',
+    'Afghanistan': 'AF',
+    'Zimbabwe': 'ZW',
+    'Myanmar': 'MM',
+    'Cyprus': 'CY',
+    'Honduras': 'HN',
+    'Nicaragua': 'NI',
+    'Cambodia': 'KH',
+    'Laos': 'LA',
+    'Mali': 'ML',
+    'Malta': 'MT',
+    'Zambia': 'ZM',
+    'Botswana': 'BW',
+    'Namibia': 'NA',
+    'Gabon': 'GA',
+    'Jamaica': 'JM',
+    'Trinidad and Tobago': 'TT',
+    'Papua New Guinea': 'PG',
+    'Fiji': 'FJ',
+    'Bhutan': 'BT',
+    'Guyana': 'GY',
+    'Mongolia': 'MN',
+    'Mozambique': 'MZ',
+    'Ghana': 'GH',
+    'Senegal': 'SN',
+    'Zimbabwe': 'ZW',
+    'Uganda': 'UG',
+    'Gambia': 'GM',
+    'Guinea': 'GN',
+    'Rwanda': 'RW',
+    'Benin': 'BJ',
+    'Burundi': 'BI',
+    'Togo': 'TG',
+    'Sierra Leone': 'SL',
+    'Malawi': 'MW',
+    'Lesotho': 'LS',
+    'Swaziland': 'SZ',
+    'Somalia': 'SO',
+    'Liberia': 'LR',
+    'Djibouti': 'DJ',
+    'Comoros': 'KM',
+    'Cape Verde': 'CV',
+    'São Tomé and Príncipe': 'ST',
+    'Seychelles': 'SC',
+    'Mauritius': 'MU',
+    'Eritrea': 'ER',
     'Unknown': 'UN'
   };
   return countryCodes[country] || 'UN';
@@ -231,15 +383,22 @@ io.on('connection', async socket => {
     }
   });
 
+  // Handle WebRTC signaling
   socket.on('signal', data => {
+    console.log(`Received signal from ${socket.id}:`, data.type || 'unknown');
     if (socket.partner) {
+      console.log(`Forwarding signal to partner: ${socket.partner.id}`);
       socket.partner.emit('signal', data);
+    } else {
+      console.log(`No partner found for ${socket.id}, signal dropped`);
     }
   });
 
-  socket.on('chatMessage', msg => {
+  // Handle chat messages with file attachments
+  socket.on('chatMessage', data => {
     if (socket.partner) {
-      socket.partner.emit('chatMessage', msg);
+      // Forward the message with file attachment to the partner
+      socket.partner.emit('chatMessage', data);
     }
   });
 

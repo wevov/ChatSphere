@@ -183,3 +183,32 @@ header {
     width: 100%;
   }
 }
+
+
+
+.video-controls {
+  background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
+}
+
+.video-controls button {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.video-controls button:hover {
+  transform: scale(1.1);
+  background-color: rgba(0,0,0,0.9) !important;
+}
+
+.video-controls button.muted {
+  color: #dc3545 !important;
+}
+
+.video-controls button.video-off {
+  color: #dc3545 !important;
+}
+
